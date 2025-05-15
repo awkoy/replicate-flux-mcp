@@ -258,7 +258,7 @@ Browse all your Replicate predictions history.
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/replicate-flux-mcp.git
+git clone https://github.com/awkoy/replicate-flux-mcp.git
 cd replicate-flux-mcp
 ```
 
