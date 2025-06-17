@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/awkoy-replicate-flux-mcp-badge.png)](https://mseep.ai/app/awkoy-replicate-flux-mcp)
+
 # Replicate Flux MCP
 
 ![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-blue)
