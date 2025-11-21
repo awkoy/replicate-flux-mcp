@@ -2,6 +2,8 @@
 
 # Replicate Flux MCP
 
+[English](README.md) | [中文](README.zh.md)
+
 ![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![TypeScript](https://img.shields.io/badge/TypeScript-4.9+-blue)
