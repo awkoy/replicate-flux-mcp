@@ -133,6 +133,20 @@ This MCP server is also available as a hosted service on Glama.ai, providing ano
 
 For more information, visit the [Glama.ai MCP servers documentation](https://glama.ai/mcp/servers).
 
+### Codex Integration
+
+Add the server to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.replicate]
+command = "npx"
+args = ["-y", "replicate-flux-mcp"]
+env = { REPLICATE_API_TOKEN = "your-replicate-api-token", REPLICATE_IMAGE_MODEL_ID = "your-image-model-id", REPLICATE_SVG_MODEL_ID = "your-svg-model-id" }
+startup_timeout_sec = 30_000
+```
+
+Replace the env values as needed. If you omit `REPLICATE_IMAGE_MODEL_ID` / `REPLICATE_SVG_MODEL_ID`, the defaults fall back to the Try for Free models so Codex can start the MCP server without paid credits.
+
 ## 🌟 Features
 
 - **🖼️ High-Quality Image Generation** - Create stunning images using Flux Schnell, a state-of-the-art AI model
