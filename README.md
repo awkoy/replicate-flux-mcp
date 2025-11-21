@@ -14,7 +14,7 @@
   <img width="380" height="200" src="https://glama.ai/mcp/servers/ss8n1knen8/badge" />
 </a>
 
-**Replicate Flux MCP** is an advanced Model Context Protocol (MCP) server that empowers AI assistants to generate high-quality images and vector graphics. Leveraging [Black Forest Labs' Flux Schnell model](https://replicate.com/black-forest-labs/flux-schnell) for raster images and [Recraft's V3 SVG model](https://replicate.com/recraft-ai/recraft-v3-svg) for vector graphics via the Replicate API.
+**Replicate Flux MCP** is an advanced Model Context Protocol (MCP) server that empowers AI assistants to generate high-quality images and vector graphics. By default it uses the free-tier models from Replicate’s **Try for Free** collection — [black-forest-labs/flux-1.1-pro](https://replicate.com/black-forest-labs/flux-1.1-pro) for raster images and [luma/reframe-video](https://replicate.com/luma/reframe-video) for SVG/video placeholder output. You can switch to higher-end models (e.g., [black-forest-labs/flux-schnell](https://replicate.com/black-forest-labs/flux-schnell) or [recraft-ai/recraft-v3-svg](https://replicate.com/recraft-ai/recraft-v3-svg)) via environment variables without code changes.
 
 ## 📑 Table of Contents
 
@@ -311,18 +311,42 @@ npm run build
 
 ### Configuration
 
-The server can be configured by modifying the `CONFIG` object in `src/config/index.ts`:
+The server can be configured by modifying the `CONFIG` object in `src/config/index.ts` or by setting the `REPLICATE_IMAGE_MODEL_ID` / `REPLICATE_SVG_MODEL_ID` environment variables to override the defaults:
 
 ```javascript
 const CONFIG = {
   serverName: "replicate-flux-mcp",
   serverVersion: "0.1.2",
-  imageModelId: "black-forest-labs/flux-schnell",
-  svgModelId: "recraft-ai/recraft-v3-svg",
+  // Defaults are free-tier models so npx works out of the box
+  imageModelId: process.env.REPLICATE_IMAGE_MODEL_ID ?? "black-forest-labs/flux-1.1-pro",
+  svgModelId: process.env.REPLICATE_SVG_MODEL_ID ?? "luma/reframe-video",
   pollingAttempts: 25,
   pollingInterval: 2000, // ms
 };
 ```
+
+#### Switching models (no code changes)
+
+Use env vars when launching the server (works with `npx`, Cursor, Claude Desktop, etc.):
+
+```bash
+# Flux Schnell + Recraft SVG (paid models)
+REPLICATE_IMAGE_MODEL_ID="black-forest-labs/flux-schnell" \
+REPLICATE_SVG_MODEL_ID="recraft-ai/recraft-v3-svg" \
+REPLICATE_API_TOKEN=YOUR_TOKEN \
+npx -y replicate-flux-mcp
+
+# Stay on Try-for-Free defaults (already default):
+REPLICATE_API_TOKEN=YOUR_TOKEN npx -y replicate-flux-mcp
+
+# Pick any other Replicate model id
+REPLICATE_IMAGE_MODEL_ID="google/imagen-4" \
+REPLICATE_SVG_MODEL_ID="black-forest-labs/flux-kontext-pro" \
+REPLICATE_API_TOKEN=YOUR_TOKEN \
+npx -y replicate-flux-mcp
+```
+
+> TIP：只需设置环境变量即可切换模型，无需修改代码或重新发布。
 
 ## 🔍 Troubleshooting
 
@@ -419,4 +443,3 @@ Or explore style variations with prompt modifiers:
 ---
 
 Made with ❤️ by Yaroslav Boiko
-
