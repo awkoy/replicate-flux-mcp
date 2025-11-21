@@ -23,7 +23,8 @@
   - [Cursor Integration](#cursor-integration)
   - [Claude Desktop Integration](#claude-desktop-integration)
   - [Smithery Integration](#smithery-integration)
-  - [Glama.ai Integration](#glamaai-integration)
+- [Glama.ai Integration](#glamaai-integration)
+- [Codex Integration](#codex-integration)
 - [Features](#-features)
 - [Documentation](#-documentation)
   - [Available Tools](#available-tools)
@@ -146,6 +147,8 @@ startup_timeout_sec = 30_000
 ```
 
 Replace the env values as needed. If you omit `REPLICATE_IMAGE_MODEL_ID` / `REPLICATE_SVG_MODEL_ID`, the defaults fall back to the Try for Free models so Codex can start the MCP server without paid credits.
+
+You can browse currently free, trial-eligible models at Replicate's **Try for Free** collection: https://replicate.com/collections/try-for-free — pick any model IDs from there and drop them into the env vars above for quick experiments.
 
 ## 🌟 Features
 
