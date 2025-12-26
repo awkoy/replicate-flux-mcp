@@ -8,7 +8,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { FileOutput } from "replicate";
 import { outputToBase64 } from "../utils/image.js";
-import { CONFIG } from "../config/index.js";
+import { resolveImageModelId } from "../utils/model.js";
 
 type ImageVariantResult = {
   variantIndex: number;
@@ -27,10 +27,12 @@ export const registerGenerateImageVariantsTool = async (
     support_image_mcp_response_type,
     prompt_variations,
     variation_mode,
+    model_id,
     ...commonParams
   } = input;
 
   try {
+    const modelId = resolveImageModelId(model_id);
     let effectiveVariants = num_variants;
     let usingPromptVariations = false;
 
@@ -61,7 +63,7 @@ export const registerGenerateImageVariantsTool = async (
         }
 
         return replicate
-          .run(CONFIG.imageModelId, {
+          .run(modelId, {
             input: {
               prompt: variantPrompt,
               seed: variantSeed,

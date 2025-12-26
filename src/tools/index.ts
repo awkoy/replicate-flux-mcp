@@ -3,6 +3,7 @@ import {
   svgGenerationSchema,
   multiImageGenerationSchema,
   imageVariantsGenerationSchema,
+  runModelSchema,
 } from "../types/index.js";
 import { predictionListSchema } from "../types/index.js";
 
@@ -16,6 +17,7 @@ import { registerCreatePredictionTool } from "./createPrediction.js";
 import { registerGenerateSvgTool } from "./generateSVG.js";
 import { registerGenerateMultipleImagesTool } from "./generateMultipleImages.js";
 import { registerGenerateImageVariantsTool } from "./generateImageVariants.js";
+import { registerRunModelTool } from "./runModel.js";
 
 export const registerAllTools = () => {
   server.tool(
@@ -59,5 +61,11 @@ export const registerAllTools = () => {
     "Get a list of recent predictions from Replicate",
     predictionListSchema,
     registerPredictionListTool
+  );
+  server.tool(
+    "run_model",
+    "Run a whitelisted Replicate model with a raw input payload",
+    runModelSchema,
+    registerRunModelTool
   );
 };

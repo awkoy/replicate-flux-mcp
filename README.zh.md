@@ -2,7 +2,7 @@
 
 [English](README.md) | **中文**
 
-本项目是一个 Model Context Protocol (MCP) 服务器，默认使用 Replicate “Try for Free” 集合中的免费模型：`black-forest-labs/flux-1.1-pro`（图片）和 `luma/reframe-video`（SVG/视频占位）。你可以通过环境变量切换到任意模型（如 `black-forest-labs/flux-schnell`、`recraft-ai/recraft-v3-svg`）。
+本项目是一个 Model Context Protocol (MCP) 服务器，默认使用 Replicate “Try for Free” 集合中的免费模型：`black-forest-labs/flux-1.1-pro`（图片）和 `luma/reframe-video`（SVG/视频占位）。你可以通过环境变量或工具参数 `model_id` 在允许的白名单内切换模型。
 
 > 免费模型列表：<https://replicate.com/collections/try-for-free>
 
@@ -22,8 +22,8 @@
 2. 任选集成方式运行 `npx -y replicate-flux-mcp`（记得传入 api token）。
 3. 通过环境变量可即时切换模型：
    ```bash
-   REPLICATE_IMAGE_MODEL_ID="black-forest-labs/flux-schnell" \
-   REPLICATE_SVG_MODEL_ID="recraft-ai/recraft-v3-svg" \
+   REPLICATE_IMAGE_MODEL_ID="google/imagen-4" \
+   REPLICATE_SVG_MODEL_ID="luma/reframe-video" \
    REPLICATE_API_TOKEN=你的token \
    npx -y replicate-flux-mcp
    ```
@@ -67,11 +67,14 @@ startup_timeout_sec = 30_000
 
 ## 模型配置
 - 默认：图片 `black-forest-labs/flux-1.1-pro`，SVG `luma/reframe-video`（均在 Try for Free）。
-- 覆盖：通过环境变量 `REPLICATE_IMAGE_MODEL_ID` / `REPLICATE_SVG_MODEL_ID` 设置任意 Replicate 模型。
-- 免费模型列表：<https://replicate.com/collections/try-for-free>
+- 覆盖：通过环境变量 `REPLICATE_IMAGE_MODEL_ID` / `REPLICATE_SVG_MODEL_ID` 或工具参数 `model_id` 选择白名单内模型。
+- 白名单（Try for Free）：
+  - 视频生成：`minimax/video-01`、`luma/reframe-video`、`topazlabs/video-upscale`
+  - 图片生成：`google/imagen-4`、`black-forest-labs/flux-kontext-pro`、`ideogram-ai/ideogram-v3-turbo`、`black-forest-labs/flux-1.1-pro`、`black-forest-labs/flux-dev`
+  - 图片增强/修复：`topazlabs/image-upscale`、`szcho/codeformer`、`tencentarc/gfpgan`
+  - 参考：<https://replicate.com/collections/try-for-free>
 
 ## 故障排查
 - 认证错误：确认 `REPLICATE_API_TOKEN` 有效。
 - 超时：增大 `pollingAttempts` 或 `pollingInterval`（见 `src/config/index.ts`）。
-- 模型不可用：确认所选模型在你的账户下可用或在 Try for Free 配额内。
-
+- 模型不可用：确认所选模型在白名单内，且在你的账户下可用或在 Try for Free 配额内。

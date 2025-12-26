@@ -4,14 +4,16 @@ import { handleError } from "../utils/error.js";
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { FileOutput } from "replicate";
 import { outputToBase64 } from "../utils/image.js";
-import { CONFIG } from "../config/index.js";
+import { resolveImageModelId } from "../utils/model.js";
 
 export const registerGenerateImageTool = async (
   input: ImageGenerationParams
 ): Promise<CallToolResult> => {
-  const { support_image_mcp_response_type, ...predictionInput } = input;
+  const { model_id, support_image_mcp_response_type, ...predictionInput } =
+    input;
   try {
-    const [output] = (await replicate.run(CONFIG.imageModelId, {
+    const modelId = resolveImageModelId(model_id);
+    const [output] = (await replicate.run(modelId, {
       input: predictionInput,
     })) as [FileOutput];
     const imageUrl = output.url() as unknown as string;

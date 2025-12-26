@@ -3,14 +3,15 @@ import { replicate } from "../services/replicate.js";
 import { handleError } from "../utils/error.js";
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { urlToSvg } from "../utils/image.js";
-import { CONFIG } from "../config/index.js";
 import { FileOutput } from "replicate";
+import { resolveSvgModelId } from "../utils/model.js";
 
 export const registerGenerateSvgTool = async (
   input: SvgGenerationParams
 ): Promise<CallToolResult> => {
   try {
-    const output = (await replicate.run(CONFIG.svgModelId, {
+    const modelId = resolveSvgModelId();
+    const output = (await replicate.run(modelId, {
       input,
     })) as FileOutput;
 

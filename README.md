@@ -16,7 +16,7 @@
   <img width="380" height="200" src="https://glama.ai/mcp/servers/ss8n1knen8/badge" />
 </a>
 
-**Replicate Flux MCP** is an advanced Model Context Protocol (MCP) server that empowers AI assistants to generate high-quality images and vector graphics. By default it uses the free-tier models from Replicate’s **Try for Free** collection — [black-forest-labs/flux-1.1-pro](https://replicate.com/black-forest-labs/flux-1.1-pro) for raster images and [luma/reframe-video](https://replicate.com/luma/reframe-video) for SVG/video placeholder output. You can switch to higher-end models (e.g., [black-forest-labs/flux-schnell](https://replicate.com/black-forest-labs/flux-schnell) or [recraft-ai/recraft-v3-svg](https://replicate.com/recraft-ai/recraft-v3-svg)) via environment variables without code changes.
+**Replicate Flux MCP** is an advanced Model Context Protocol (MCP) server that empowers AI assistants to generate high-quality images and vector graphics. By default it uses the free-tier models from Replicate’s **Try for Free** collection — [black-forest-labs/flux-1.1-pro](https://replicate.com/black-forest-labs/flux-1.1-pro) for raster images and [luma/reframe-video](https://replicate.com/luma/reframe-video) for SVG/video placeholder output. You can switch among a fixed allowlist of Try for Free models via environment variables or per-tool `model_id` overrides.
 
 ## 📑 Table of Contents
 
@@ -150,12 +150,16 @@ startup_timeout_sec = 30_000
 
 Replace the env values as needed. If you omit `REPLICATE_IMAGE_MODEL_ID` / `REPLICATE_SVG_MODEL_ID`, the defaults fall back to the Try for Free models so Codex can start the MCP server without paid credits.
 
-You can browse currently free, trial-eligible models at Replicate's **Try for Free** collection: https://replicate.com/collections/try-for-free — pick any model IDs from there and drop them into the env vars above for quick experiments.
+This server enforces a fixed allowlist of Try for Free model IDs. Use one of the entries below for env vars or per-tool `model_id` overrides:
+
+- **Video generation**: `minimax/video-01`, `luma/reframe-video`, `topazlabs/video-upscale`
+- **Image generation**: `google/imagen-4`, `black-forest-labs/flux-kontext-pro`, `ideogram-ai/ideogram-v3-turbo`, `black-forest-labs/flux-1.1-pro`, `black-forest-labs/flux-dev`
+- **Image upscaling + restoration**: `topazlabs/image-upscale`, `szcho/codeformer`, `tencentarc/gfpgan`
 
 ## 🌟 Features
 
-- **🖼️ High-Quality Image Generation** - Create stunning images using Flux Schnell, a state-of-the-art AI model
-- **🎨 Vector Graphics Support** - Generate professional SVG vector graphics with Recraft V3 SVG model
+- **🖼️ High-Quality Image Generation** - Create stunning images using allowlisted Try for Free models
+- **🎨 Vector Graphics Support** - Generate SVG/video placeholder output with allowlisted models
 - **🤖 AI Assistant Integration** - Seamlessly enable AI assistants like Claude to generate visual content
 - **🎛️ Advanced Customization** - Fine-tune generation with controls for aspect ratio, quality, resolution, and more
 - **🔌 Universal MCP Compatibility** - Works with all MCP clients including Cursor, Claude Desktop, Cline, and Zed
@@ -171,11 +175,12 @@ You can browse currently free, trial-eligible models at Replicate's **Try for Fr
 
 #### `generate_image`
 
-Generates an image based on a text prompt using the Flux Schnell model.
+Generates an image based on a text prompt using the configured image model (allowlist only).
 
 ```typescript
 {
   prompt: string;                // Required: Text description of the image to generate
+  model_id?: string;             // Optional: Override image model (allowlist only)
   seed?: number;                 // Optional: Random seed for reproducible generation
   go_fast?: boolean;             // Optional: Run faster predictions with optimized model (default: true)
   megapixels?: "1" | "0.25";     // Optional: Image resolution (default: "1")
@@ -190,11 +195,12 @@ Generates an image based on a text prompt using the Flux Schnell model.
 
 #### `generate_multiple_images`
 
-Generates multiple images based on an array of prompts using the Flux Schnell model.
+Generates multiple images based on an array of prompts using the configured image model (allowlist only).
 
 ```typescript
 {
   prompts: string[];             // Required: Array of text descriptions for images to generate (1-10 prompts)
+  model_id?: string;             // Optional: Override image model (allowlist only)
   seed?: number;                 // Optional: Random seed for reproducible generation
   go_fast?: boolean;             // Optional: Run faster predictions with optimized model (default: true)
   megapixels?: "1" | "0.25";     // Optional: Image resolution (default: "1")
@@ -208,11 +214,12 @@ Generates multiple images based on an array of prompts using the Flux Schnell mo
 
 #### `generate_image_variants`
 
-Generates multiple variants of the same image from a single prompt.
+Generates multiple variants of the same image from a single prompt using the configured image model (allowlist only).
 
 ```typescript
 {
   prompt: string;                // Required: Text description for the image to generate variants of
+  model_id?: string;             // Optional: Override image model (allowlist only)
   num_variants: number;          // Required: Number of image variants to generate (2-10, default: 4)
   prompt_variations?: string[];  // Optional: List of prompt modifiers to apply to variants (e.g., ["in watercolor style", "in oil painting style"])
   variation_mode?: "append" | "replace"; // Optional: How to apply variations - 'append' adds to base prompt, 'replace' uses variations directly (default: "append")
@@ -229,7 +236,7 @@ Generates multiple variants of the same image from a single prompt.
 
 #### `generate_svg`
 
-Generates an SVG vector image based on a text prompt using the Recraft V3 SVG model.
+Generates an SVG/vector placeholder output based on a text prompt using the configured SVG/video model (allowlist only).
 
 ```typescript
 {
@@ -260,15 +267,26 @@ Gets detailed information about a specific prediction.
 }
 ```
 
+#### `run_model`
+
+Runs a whitelisted Replicate model with a raw input payload (useful for video or restoration models).
+
+```typescript
+{
+  model_id: string;                // Required: Replicate model id (allowlist only)
+  input?: Record<string, unknown>; // Optional: Raw input payload for the model
+}
+```
+
 ### Available Resources
 
 #### `imagelist`
 
-Browse your history of generated images created with the Flux Schnell model.
+Browse your history of generated images created with the configured image model.
 
 #### `svglist`
 
-Browse your history of generated SVG images created with the Recraft V3 SVG model.
+Browse your history of generated SVG outputs created with the configured SVG/video model.
 
 #### `predictionlist`
 
@@ -336,7 +354,7 @@ The server can be configured by modifying the `CONFIG` object in `src/config/ind
 const CONFIG = {
   serverName: "replicate-flux-mcp",
   serverVersion: "0.1.2",
-  // Defaults are free-tier models so npx works out of the box
+  // Defaults are allowlisted Try for Free models so npx works out of the box
   imageModelId: process.env.REPLICATE_IMAGE_MODEL_ID ?? "black-forest-labs/flux-1.1-pro",
   svgModelId: process.env.REPLICATE_SVG_MODEL_ID ?? "luma/reframe-video",
   pollingAttempts: 25,
@@ -346,21 +364,15 @@ const CONFIG = {
 
 #### Switching models (no code changes)
 
-Use env vars when launching the server (works with `npx`, Cursor, Claude Desktop, etc.):
+Use env vars when launching the server (works with `npx`, Cursor, Claude Desktop, etc.). Only allowlisted model IDs are accepted:
 
 ```bash
-# Flux Schnell + Recraft SVG (paid models)
-REPLICATE_IMAGE_MODEL_ID="black-forest-labs/flux-schnell" \
-REPLICATE_SVG_MODEL_ID="recraft-ai/recraft-v3-svg" \
-REPLICATE_API_TOKEN=YOUR_TOKEN \
-npx -y replicate-flux-mcp
-
 # Stay on Try-for-Free defaults (already default):
 REPLICATE_API_TOKEN=YOUR_TOKEN npx -y replicate-flux-mcp
 
-# Pick any other Replicate model id
+# Switch to other allowlisted models
 REPLICATE_IMAGE_MODEL_ID="google/imagen-4" \
-REPLICATE_SVG_MODEL_ID="black-forest-labs/flux-kontext-pro" \
+REPLICATE_SVG_MODEL_ID="luma/reframe-video" \
 REPLICATE_API_TOKEN=YOUR_TOKEN \
 npx -y replicate-flux-mcp
 ```
@@ -403,8 +415,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - [Model Context Protocol Documentation](https://modelcontextprotocol.io)
 - [Replicate API Documentation](https://replicate.com/docs)
-- [Flux Schnell Model](https://replicate.com/black-forest-labs/flux-schnell)
-- [Recraft V3 SVG Model](https://replicate.com/recraft-ai/recraft-v3-svg)
+- [Try for Free Collection](https://replicate.com/collections/try-for-free)
+- [Flux 1.1 Pro Model](https://replicate.com/black-forest-labs/flux-1.1-pro)
 - [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
 - [Smithery Documentation](https://smithery.ai/docs)
 - [Glama.ai MCP Servers](https://glama.ai/mcp/servers)

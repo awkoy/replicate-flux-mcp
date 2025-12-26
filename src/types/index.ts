@@ -2,6 +2,11 @@ import { z } from "zod";
 
 export const createPredictionSchema = {
   prompt: z.string().min(1).describe("Prompt for generated image"),
+  model_id: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("Optional Replicate model id (allowlist only)"),
   seed: z
     .number()
     .int()
@@ -138,6 +143,11 @@ export const multiImageGenerationSchema = {
     .min(1)
     .max(10)
     .describe("Array of text descriptions for the images to generate"),
+  model_id: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("Optional Replicate model id (allowlist only)"),
   seed: z
     .number()
     .int()
@@ -212,6 +222,11 @@ export const imageVariantsGenerationSchema = {
     .string()
     .min(1)
     .describe("Text description for the image to generate variants of"),
+  model_id: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("Optional Replicate model id (allowlist only)"),
   num_variants: z
     .number()
     .int()
@@ -301,3 +316,16 @@ const imageVariantsGenerationObjectSchema = z.object(
 export type ImageVariantsGenerationParams = z.infer<
   typeof imageVariantsGenerationObjectSchema
 >;
+
+export const runModelSchema = {
+  model_id: z
+    .string()
+    .min(1)
+    .describe("Replicate model id to run (allowlist only)"),
+  input: z
+    .record(z.unknown())
+    .optional()
+    .describe("Input payload for the selected model"),
+};
+const runModelObjectSchema = z.object(runModelSchema);
+export type RunModelParams = z.infer<typeof runModelObjectSchema>;

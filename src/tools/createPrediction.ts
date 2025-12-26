@@ -2,15 +2,17 @@ import { CreatePredictionParams } from "../types/index.js";
 import { pollForCompletion, replicate } from "../services/replicate.js";
 import { handleError } from "../utils/error.js";
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { CONFIG } from "../config/index.js";
+import { resolveImageModelId } from "../utils/model.js";
 
 export const registerCreatePredictionTool = async (
   input: CreatePredictionParams
 ): Promise<CallToolResult> => {
   try {
+    const { model_id, ...predictionInput } = input;
+    const modelId = resolveImageModelId(model_id);
     const prediction = await replicate.predictions.create({
-      model: CONFIG.imageModelId,
-      input,
+      model: modelId,
+      input: predictionInput,
     });
 
     await replicate.predictions.get(prediction.id);

@@ -8,16 +8,18 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { FileOutput } from "replicate";
 import { outputToBase64 } from "../utils/image.js";
-import { CONFIG } from "../config/index.js";
+import { resolveImageModelId } from "../utils/model.js";
 
 export const registerGenerateMultipleImagesTool = async (
   input: MultiImageGenerationParams
 ): Promise<CallToolResult> => {
-  const { prompts, support_image_mcp_response_type, ...commonParams } = input;
+  const { prompts, model_id, support_image_mcp_response_type, ...commonParams } =
+    input;
   try {
+    const modelId = resolveImageModelId(model_id);
     // Process all prompts in parallel
     const generationPromises = prompts.map(async (prompt) => {
-      const [output] = (await replicate.run(CONFIG.imageModelId, {
+      const [output] = (await replicate.run(modelId, {
         input: {
           prompt,
           ...commonParams,
