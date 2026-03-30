@@ -420,3 +420,8 @@ Or explore style variations with prompt modifiers:
 
 Made with ❤️ by Yaroslav Boiko
 
+
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/awkoy-replicate-flux-mcp).
+
