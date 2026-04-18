@@ -13,7 +13,6 @@ export const registerCreatePredictionTool = async (
       input,
     });
 
-    await replicate.predictions.get(prediction.id);
     const completed = await pollForCompletion(prediction.id);
 
     return {
@@ -25,6 +24,6 @@ export const registerCreatePredictionTool = async (
       ],
     };
   } catch (error) {
-    handleError(error);
+    return handleError(error);
   }
 };

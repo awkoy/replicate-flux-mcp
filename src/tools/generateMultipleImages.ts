@@ -3,78 +3,79 @@ import { replicate } from "../services/replicate.js";
 import { handleError } from "../utils/error.js";
 import {
   CallToolResult,
-  TextContent,
-  ImageContent,
+  ServerNotification,
+  ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
+import { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import { FileOutput } from "replicate";
-import { outputToBase64 } from "../utils/image.js";
+import { mimeFor, outputToBase64 } from "../utils/image.js";
 import { CONFIG } from "../config/index.js";
 
 export const registerGenerateMultipleImagesTool = async (
-  input: MultiImageGenerationParams
+  input: MultiImageGenerationParams,
+  extra: RequestHandlerExtra<ServerRequest, ServerNotification>
 ): Promise<CallToolResult> => {
-  const { prompts, support_image_mcp_response_type, ...commonParams } = input;
+  const { prompts, ...commonParams } = input;
+  const progressToken = extra._meta?.progressToken;
+  const total = prompts.length;
+  let done = 0;
+
   try {
-    // Process all prompts in parallel
+    const notify = async (message: string) => {
+      if (progressToken === undefined) return;
+      await extra.sendNotification({
+        method: "notifications/progress",
+        params: { progressToken, progress: done, total, message },
+      });
+    };
+
+    await notify(`Starting ${total} image generations`);
+
     const generationPromises = prompts.map(async (prompt) => {
       const [output] = (await replicate.run(CONFIG.imageModelId, {
-        input: {
-          prompt,
-          ...commonParams,
-        },
+        input: { prompt, ...commonParams },
       })) as [FileOutput];
 
       const imageUrl = output.url() as unknown as string;
+      const imageBase64 = await outputToBase64(output);
 
-      if (support_image_mcp_response_type) {
-        const imageBase64 = await outputToBase64(output);
-        return {
-          prompt,
-          imageUrl,
-          imageBase64,
-        };
-      }
+      done += 1;
+      await notify(`Completed ${done}/${total}`);
 
-      return {
-        prompt,
-        imageUrl,
-      };
+      return { prompt, imageUrl, imageBase64 };
     });
 
-    // Wait for all image generation to complete
     const results = await Promise.all(generationPromises);
+    const mimeType = mimeFor(input.output_format);
 
-    // Build response content
-    const responseContent: (TextContent | ImageContent)[] = [];
+    const content: CallToolResult["content"] = [
+      {
+        type: "text",
+        text: `Generated ${results.length} images based on your prompts:`,
+      },
+    ];
 
-    // Add intro text
-    responseContent.push({
-      type: "text",
-      text: `Generated ${results.length} images based on your prompts:`,
-    } as TextContent);
-
-    // Add each image with its prompt
     for (const result of results) {
-      responseContent.push({
+      content.push({
         type: "text",
         text: `\n\nPrompt: "${result.prompt}"\nImage URL: ${result.imageUrl}`,
-      } as TextContent);
-
-      if (support_image_mcp_response_type && result.imageBase64) {
-        responseContent.push({
-          type: "image",
-          data: result.imageBase64,
-          mimeType: `image/${
-            input.output_format === "jpg" ? "jpeg" : input.output_format
-          }`,
-        } as ImageContent);
-      }
+      });
+      content.push({
+        type: "image",
+        data: result.imageBase64,
+        mimeType,
+      });
     }
 
     return {
-      content: responseContent,
+      content,
+      structuredContent: {
+        images: results.map((r) => ({ url: r.imageUrl, prompt: r.prompt })),
+        format: input.output_format,
+        aspect_ratio: input.aspect_ratio,
+      },
     };
   } catch (error) {
-    handleError(error);
+    return handleError(error);
   }
 };

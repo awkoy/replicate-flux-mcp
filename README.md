@@ -28,7 +28,11 @@
 - [Documentation](#-documentation)
   - [Available Tools](#available-tools)
   - [Available Resources](#available-resources)
+  - [Available Prompts](#available-prompts)
+  - [Structured Output](#structured-output)
+  - [Environment Variables](#environment-variables)
 - [Development](#-development)
+  - [Testing](#testing)
 - [Technical Details](#-technical-details)
 - [Troubleshooting](#-troubleshooting)
 - [Contributing](#-contributing)
@@ -135,16 +139,17 @@ For more information, visit the [Glama.ai MCP servers documentation](https://gla
 
 ## 🌟 Features
 
-- **🖼️ High-Quality Image Generation** - Create stunning images using Flux Schnell, a state-of-the-art AI model
-- **🎨 Vector Graphics Support** - Generate professional SVG vector graphics with Recraft V3 SVG model
-- **🤖 AI Assistant Integration** - Seamlessly enable AI assistants like Claude to generate visual content
-- **🎛️ Advanced Customization** - Fine-tune generation with controls for aspect ratio, quality, resolution, and more
-- **🔌 Universal MCP Compatibility** - Works with all MCP clients including Cursor, Claude Desktop, Cline, and Zed
-- **🔒 Secure Local Processing** - All requests are processed locally for enhanced privacy and security
-- **🔍 Comprehensive History Management** - Track, view, and retrieve your complete generation history
-- **📊 Batch Processing** - Generate multiple images from different prompts in a single request
-- **🔄 Variant Exploration** - Create and compare multiple interpretations of the same concept
-- **✏️ Prompt Engineering** - Fine-tune image variations with specialized prompt modifications
+- **🖼️ High-Quality Image Generation** — Flux Schnell raster images with full control over aspect ratio, megapixels, inference steps, output format, and seed.
+- **🎨 Vector Graphics** — Recraft V3 SVG for logos, icons, and diagrams.
+- **📊 Batch + Variants** — Generate N images from N prompts or N variants of one prompt (seed-based or prompt-modifier-based).
+- **🧩 Arbitrary Replicate Models** — `run_replicate_model` escape hatch accepts any `owner/name[:version]` reference, with `get_model_schema` introspection for the OpenAPI input schema. Optional allowlist via `REPLICATE_MODEL_ALLOWLIST`.
+- **📦 Structured Output** — Every `generate_*` tool returns machine-readable `structuredContent` alongside human-readable content, matching a per-tool `outputSchema` (URL, prompt, format, aspect ratio, per-variant seed, etc).
+- **⏳ Progress Notifications** — Batch and variant generation emit `notifications/progress` for clients that opt in via `progressToken`, so long runs aren't black-boxed.
+- **💬 Curated Prompts** — 5 ready-made prompt templates (`logo`, `portrait`, `svg-icon`, `product-shot`, `isometric-diagram`) surfaced in Claude Desktop's slash palette and Cursor's `@`-menu.
+- **🏷️ Proper Tool Annotations** — `readOnlyHint` / `destructiveHint` / `openWorldHint` / `idempotentHint` set correctly so clients can reason about safety and cost.
+- **🪵 Structured Logging** — Server-side errors travel over `notifications/message` instead of stderr.
+- **🔌 Universal MCP Compatibility** — MCP protocol 2025-11-25; works with Claude Desktop, Cursor, Cline, Zed, and any spec-compliant client.
+- **🔍 Generation History** — Browse past runs through `imagelist`, `svglist`, and `predictionlist` resources.
 
 ## 📚 Documentation
 
@@ -241,6 +246,31 @@ Gets detailed information about a specific prediction.
 }
 ```
 
+#### `run_replicate_model`
+
+Runs any model hosted on Replicate by its `owner/name[:version]` reference. Use this as an escape hatch when none of the curated tools fit. Call `get_model_schema` first if you don't know the input shape.
+
+```typescript
+{
+  model: string;                              // Required: 'owner/name' or 'owner/name:version'
+  input: Record<string, unknown>;             // Required: Model input parameters
+  prefer_wait?: number;                       // Optional: Seconds to block waiting for sync output (1-60, default 60)
+  return_as?: "url" | "base64" | "both";      // Optional: How to return file outputs (default "url")
+}
+```
+
+Set the `REPLICATE_MODEL_ALLOWLIST` env var (comma-separated `owner/name` entries) to restrict which models can be invoked. Unset = any model allowed. Set-but-empty = deny all (the server fails closed rather than silently allowing everything).
+
+#### `get_model_schema`
+
+Fetches the OpenAPI input schema and description for a Replicate model so you can pass the right parameters to `run_replicate_model`.
+
+```typescript
+{
+  model: string;  // Required: Replicate model reference in 'owner/name' form
+}
+```
+
 ### Available Resources
 
 #### `imagelist`
@@ -254,6 +284,38 @@ Browse your history of generated SVG images created with the Recraft V3 SVG mode
 #### `predictionlist`
 
 Browse all your Replicate predictions history.
+
+### Available Prompts
+
+Curated templates surfaced in Claude Desktop's slash menu and Cursor's `@`-palette. Each one fills in sensible defaults then delegates to the relevant generation tool.
+
+| Prompt | Description | Arguments |
+| --- | --- | --- |
+| `logo` | Brand/product logo | `brand`, `style?`, `palette?` |
+| `portrait` | Photoreal portrait | `subject`, `mood?`, `lens?` |
+| `svg-icon` | Single-concept vector icon | `concept`, `style?` |
+| `product-shot` | Studio product photography | `product`, `surface?` |
+| `isometric-diagram` | Isometric technical illustration | `subject`, `emphasis?` |
+
+### Structured Output
+
+Every `generate_*` tool returns both human-readable `content` (text + image blocks) and machine-readable `structuredContent` that matches the tool's `outputSchema`.
+
+| Tool | `structuredContent` shape |
+| --- | --- |
+| `generate_image` | `{ url, prompt, format, aspect_ratio, seed? }` |
+| `generate_svg` | `{ url, prompt, size, style, svg? }` |
+| `generate_multiple_images` | `{ images: [{ url, prompt }], format, aspect_ratio }` |
+| `generate_image_variants` | `{ base_prompt, variation_mode, variants: [{ variant_index, url, prompt_used, seed? }], format, aspect_ratio }` |
+
+Clients that understand MCP structured output can consume URLs and metadata directly without parsing prose.
+
+### Environment Variables
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `REPLICATE_API_TOKEN` | yes | API token for [Replicate](https://replicate.com/account/api-tokens). The server exits immediately if it's missing. |
+| `REPLICATE_MODEL_ALLOWLIST` | no | Comma-separated `owner/name` entries that gate `run_replicate_model`. **Unset** = any model allowed. **Set-but-empty** = deny all (fail-closed). Evaluated once at process start, so set it in your MCP client's `env` block (not via a dotenv loaded later). |
 
 ## 💻 Development
 
@@ -270,10 +332,10 @@ cd replicate-flux-mcp
 npm install
 ```
 
-3. Start development mode:
+3. Start the TypeScript watcher:
 
 ```bash
-npm run dev
+npm run watch
 ```
 
 4. Build the project:
@@ -282,7 +344,13 @@ npm run dev
 npm run build
 ```
 
-5. Connect to Client:
+5. Smoke-test the server with the MCP Inspector:
+
+```bash
+npm run inspector
+```
+
+6. Connect to Client:
 
 ```json
 {
@@ -300,6 +368,15 @@ npm run build
 }
 ```
 
+### Testing
+
+This project currently has no automated test suite. Verification is done via:
+
+- `npm run build` — TypeScript type-checking catches most regressions.
+- `npm run inspector` — drives the built binary through the official MCP Inspector for end-to-end smoke testing of tools, resources, and prompts.
+
+Contributions adding a proper test framework (e.g. Vitest + an MCP stdio client harness) are welcome.
+
 ## ⚙️ Technical Details
 
 ### Stack
@@ -313,16 +390,22 @@ npm run build
 
 The server can be configured by modifying the `CONFIG` object in `src/config/index.ts`:
 
-```javascript
-const CONFIG = {
+```typescript
+export const CONFIG = {
   serverName: "replicate-flux-mcp",
-  serverVersion: "0.1.2",
+  serverVersion: "0.4.0",
   imageModelId: "black-forest-labs/flux-schnell",
   svgModelId: "recraft-ai/recraft-v3-svg",
   pollingAttempts: 25,
   pollingInterval: 2000, // ms
+  modelAllowlist: (process.env.REPLICATE_MODEL_ALLOWLIST ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean),
 };
 ```
+
+`modelAllowlist` is evaluated once at process start from `REPLICATE_MODEL_ALLOWLIST`. Restart the server after changing it.
 
 ## 🔍 Troubleshooting
 

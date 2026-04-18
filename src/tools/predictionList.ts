@@ -31,6 +31,6 @@ export const registerPredictionListTool = async ({
       ],
     };
   } catch (error) {
-    handleError(error);
+    return handleError(error);
   }
 };

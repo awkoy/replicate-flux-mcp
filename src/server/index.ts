@@ -11,6 +11,8 @@ export const server = new McpServer(
     capabilities: {
       resources: {},
       tools: {},
+      prompts: {},
+      logging: {},
     },
     instructions: `
     MCP server for the Replicate models.

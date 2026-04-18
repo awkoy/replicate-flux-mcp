@@ -19,31 +19,28 @@ export const registerGenerateSvgTool = async (
       throw new Error("Failed to generate SVG URL");
     }
 
+    let svg: string | undefined;
     try {
-      const svg = await urlToSvg(svgUrl);
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `This is a generated SVG url: ${svgUrl}`,
-          },
-          {
-            type: "text",
-            text: svg,
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `This is a generated SVG url: ${svgUrl}`,
-          },
-        ],
-      };
+      svg = await urlToSvg(svgUrl);
+    } catch {
+      svg = undefined;
     }
+
+    const content: CallToolResult["content"] = [
+      { type: "text", text: `Generated SVG URL: ${svgUrl}` },
+    ];
+    if (svg) content.push({ type: "text", text: svg });
+
+    return {
+      content,
+      structuredContent: {
+        url: svgUrl,
+        prompt: input.prompt,
+        size: input.size,
+        style: input.style,
+        ...(svg ? { svg } : {}),
+      },
+    };
   } catch (error) {
     return handleError(error);
   }

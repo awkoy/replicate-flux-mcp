@@ -5,46 +5,40 @@ import {
 } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { replicate } from "../services/replicate.js";
 import { urlToBase64 } from "../utils/image.js";
-import { Prediction } from "replicate";
 import { CONFIG } from "../config/index.js";
+import { fetchAllPredictions } from "./fetchPredictions.js";
 
 export const registerImageListResource = () => {
   const list: ListResourcesCallback = async () => {
-    try {
-      const predictions: Prediction[] = [];
-      for await (const page of replicate.paginate(replicate.predictions.list)) {
-        predictions.push(...page);
-      }
-
-      return {
-        resources: predictions
-          .filter(
-            (prediction) =>
-              prediction.output?.length &&
-              prediction.model === CONFIG.imageModelId
-          )
-          .map((prediction) => ({
-            uri: `images://${prediction.id}`,
-            name: `Image ${prediction.id}`,
-            mimeType: "application/json",
-            description: `Generated image by ${prediction.model} with id ${prediction.id}`,
-          })),
-        nextCursor: undefined,
-      };
-    } catch (error) {
-      console.error("Error listing predictions:", error);
-      return {
-        resources: [],
-        nextCursor: undefined,
-      };
-    }
+    const predictions = await fetchAllPredictions("images");
+    return {
+      resources: predictions
+        .filter(
+          (prediction) =>
+            prediction.output?.length &&
+            prediction.model === CONFIG.imageModelId
+        )
+        .map((prediction) => ({
+          uri: `images://${prediction.id}`,
+          name: `Image ${prediction.id}`,
+          mimeType: "application/json",
+          description: `Generated image by ${prediction.model} with id ${prediction.id}`,
+        })),
+      nextCursor: undefined,
+    };
   };
 
-  server.resource(
+  server.registerResource(
     "images",
     new ResourceTemplate("images://{id}", {
       list,
     }),
+    {
+      title: "Generated images",
+      description:
+        "History of images generated with the Flux Schnell model on Replicate",
+      mimeType: "image/png",
+    },
     async (uri, { id }) => {
       const prediction = await replicate.predictions.get(id as string);
 
