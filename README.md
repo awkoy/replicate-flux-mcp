@@ -6,6 +6,8 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![TypeScript](https://img.shields.io/badge/TypeScript-4.9+-blue)
 ![Model Context Protocol](https://img.shields.io/badge/MCP-Enabled-purple)
+
+[![Trust Score](https://archestra.ai/mcp-catalog/api/badge/quality/awkoy/replicate-flux-mcp)](https://archestra.ai/mcp-catalog/awkoy__replicate-flux-mcp)
 [![smithery badge](https://smithery.ai/badge/@awkoy/replicate-flux-mcp)](https://smithery.ai/server/@awkoy/replicate-flux-mcp)
 ![NPM Downloads](https://img.shields.io/npm/dw/replicate-flux-mcp)
 ![Stars](https://img.shields.io/github/stars/awkoy/replicate-flux-mcp)
