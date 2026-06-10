@@ -2,9 +2,7 @@
 
 [English](README.md) | **中文**
 
-本项目是一个 Model Context Protocol (MCP) 服务器，默认使用 Replicate “Try for Free” 集合中的免费模型：`black-forest-labs/flux-1.1-pro`（图片）和 `luma/reframe-video`（SVG/视频占位）。你可以通过环境变量或工具参数 `model_id` 在允许的白名单内切换模型。
-
-> 免费模型列表：<https://replicate.com/collections/try-for-free>
+本项目是一个 Model Context Protocol (MCP) 服务器，默认使用 `black-forest-labs/flux-schnell` 生成图片，使用 `recraft-ai/recraft-v3-svg` 生成 SVG。你可以通过环境变量覆盖默认模型，图片工具也支持通过工具参数 `model_id` 在内置白名单内按次切换模型。
 
 ## 目录
 - [快速开始](#快速开始)
@@ -23,7 +21,7 @@
 3. 通过环境变量可即时切换模型：
    ```bash
    REPLICATE_IMAGE_MODEL_ID="google/imagen-4" \
-   REPLICATE_SVG_MODEL_ID="luma/reframe-video" \
+   REPLICATE_SVG_MODEL_ID="recraft-ai/recraft-v3-svg" \
    REPLICATE_API_TOKEN=你的token \
    npx -y replicate-flux-mcp
    ```
@@ -63,18 +61,18 @@ args = ["-y", "replicate-flux-mcp"]
 env = { REPLICATE_API_TOKEN = "your-replicate-api-token", REPLICATE_IMAGE_MODEL_ID = "your-image-model-id", REPLICATE_SVG_MODEL_ID = "your-svg-model-id" }
 startup_timeout_sec = 30_000
 ```
-不填 `REPLICATE_IMAGE_MODEL_ID` / `REPLICATE_SVG_MODEL_ID` 时会使用免费默认模型，启动即可使用。
+不填 `REPLICATE_IMAGE_MODEL_ID` / `REPLICATE_SVG_MODEL_ID` 时会使用默认模型，启动即可使用。
 
 ## 模型配置
-- 默认：图片 `black-forest-labs/flux-1.1-pro`，SVG `luma/reframe-video`（均在 Try for Free）。
-- 覆盖：通过环境变量 `REPLICATE_IMAGE_MODEL_ID` / `REPLICATE_SVG_MODEL_ID` 或工具参数 `model_id` 选择白名单内模型。
-- 白名单（Try for Free）：
-  - 视频生成：`minimax/video-01`、`luma/reframe-video`、`topazlabs/video-upscale`
-  - 图片生成：`google/imagen-4`、`black-forest-labs/flux-kontext-pro`、`ideogram-ai/ideogram-v3-turbo`、`black-forest-labs/flux-1.1-pro`、`black-forest-labs/flux-dev`
-  - 图片增强/修复：`topazlabs/image-upscale`、`szcho/codeformer`、`tencentarc/gfpgan`
-  - 参考：<https://replicate.com/collections/try-for-free>
+- 默认：图片 `black-forest-labs/flux-schnell`，SVG `recraft-ai/recraft-v3-svg`。
+- 覆盖：通过环境变量 `REPLICATE_IMAGE_MODEL_ID` / `REPLICATE_SVG_MODEL_ID` 覆盖默认模型；图片工具也可通过参数 `model_id` 按次覆盖。
+- 内置白名单：
+  - 图片生成：`black-forest-labs/flux-schnell`、`google/imagen-4`、`black-forest-labs/flux-kontext-pro`、`ideogram-ai/ideogram-v3-turbo`、`black-forest-labs/flux-1.1-pro`、`black-forest-labs/flux-dev`
+  - SVG 生成：`recraft-ai/recraft-v3-svg`
+  - 兼容工具 `run_model` 额外支持：`minimax/video-01`、`luma/reframe-video`、`topazlabs/video-upscale`、`topazlabs/image-upscale`、`szcho/codeformer`、`tencentarc/gfpgan`
+- `run_replicate_model` 可用 `REPLICATE_MODEL_ALLOWLIST` 限制可运行模型；不设置表示允许任意模型，设置为空字符串表示拒绝全部。
 
 ## 故障排查
 - 认证错误：确认 `REPLICATE_API_TOKEN` 有效。
 - 超时：增大 `pollingAttempts` 或 `pollingInterval`（见 `src/config/index.ts`）。
-- 模型不可用：确认所选模型在白名单内，且在你的账户下可用或在 Try for Free 配额内。
+- 模型不可用：确认所选模型在对应白名单内，且你的 Replicate 账户有权运行该模型。

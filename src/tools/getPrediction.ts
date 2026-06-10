@@ -18,6 +18,6 @@ export const registerGetPredictionTool = async ({
       ],
     };
   } catch (error) {
-    handleError(error);
+    return handleError(error);
   }
 };

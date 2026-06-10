@@ -6,11 +6,16 @@ export type ReplicateModelId =
   | `${string}/${string}:${string}`;
 
 export const IMAGE_GENERATION_MODEL_IDS = [
+  "black-forest-labs/flux-schnell",
   "google/imagen-4",
   "black-forest-labs/flux-kontext-pro",
   "ideogram-ai/ideogram-v3-turbo",
   "black-forest-labs/flux-1.1-pro",
   "black-forest-labs/flux-dev",
+] as const satisfies readonly ReplicateModelId[];
+
+export const SVG_GENERATION_MODEL_IDS = [
+  "recraft-ai/recraft-v3-svg",
 ] as const satisfies readonly ReplicateModelId[];
 
 export const VIDEO_MODEL_IDS = [
@@ -26,9 +31,10 @@ export const IMAGE_RESTORE_MODEL_IDS = [
 ] as const satisfies readonly ReplicateModelId[];
 
 const IMAGE_MODEL_SET = new Set<ReplicateModelId>(IMAGE_GENERATION_MODEL_IDS);
-const VIDEO_MODEL_SET = new Set<ReplicateModelId>(VIDEO_MODEL_IDS);
+const SVG_MODEL_SET = new Set<ReplicateModelId>(SVG_GENERATION_MODEL_IDS);
 const ALL_ALLOWED_MODEL_IDS = new Set<string>([
   ...IMAGE_GENERATION_MODEL_IDS,
+  ...SVG_GENERATION_MODEL_IDS,
   ...VIDEO_MODEL_IDS,
   ...IMAGE_RESTORE_MODEL_IDS,
 ]);
@@ -52,11 +58,11 @@ export function resolveImageModelId(requested?: string): ReplicateModelId {
 
 export function resolveSvgModelId(requested?: string): ReplicateModelId {
   const modelId = (requested ?? CONFIG.svgModelId) as ReplicateModelId;
-  if (!VIDEO_MODEL_SET.has(modelId)) {
+  if (!SVG_MODEL_SET.has(modelId)) {
     throw new McpError(
       ErrorCode.InvalidParams,
-      `model_id "${modelId}" is not allowed for SVG/video placeholder output. Allowed: ${formatAllowed(
-        VIDEO_MODEL_IDS
+      `model_id "${modelId}" is not allowed for SVG generation. Allowed: ${formatAllowed(
+        SVG_GENERATION_MODEL_IDS
       )}.`
     );
   }
@@ -70,7 +76,12 @@ export function assertAllowedModelId(
     throw new McpError(
       ErrorCode.InvalidParams,
       `model_id "${modelId}" is not in the allowlist. Allowed: ${formatAllowed(
-        [...IMAGE_GENERATION_MODEL_IDS, ...VIDEO_MODEL_IDS, ...IMAGE_RESTORE_MODEL_IDS]
+        [
+          ...IMAGE_GENERATION_MODEL_IDS,
+          ...SVG_GENERATION_MODEL_IDS,
+          ...VIDEO_MODEL_IDS,
+          ...IMAGE_RESTORE_MODEL_IDS,
+        ]
       )}.`
     );
   }

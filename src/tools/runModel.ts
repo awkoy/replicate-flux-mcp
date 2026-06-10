@@ -122,6 +122,6 @@ export const registerRunModelTool = async (
 
     return { content };
   } catch (error) {
-    handleError(error);
+    return handleError(error);
   }
 };

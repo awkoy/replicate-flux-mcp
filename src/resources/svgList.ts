@@ -5,42 +5,36 @@ import {
 } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { replicate } from "../services/replicate.js";
 import { urlToSvg } from "../utils/image.js";
-import { Prediction } from "replicate";
 import { CONFIG } from "../config/index.js";
+import { fetchAllPredictions } from "./fetchPredictions.js";
 
 export const registerSvgListResource = () => {
   const list: ListResourcesCallback = async () => {
-    try {
-      const predictions: Prediction[] = [];
-      for await (const page of replicate.paginate(replicate.predictions.list)) {
-        predictions.push(...page);
-      }
-
-      return {
-        resources: predictions
-          .filter((prediction) => prediction.model === CONFIG.svgModelId)
-          .map((prediction) => ({
-            uri: `svglist://${prediction.id}`,
-            name: `SVG ${prediction.id}`,
-            mimeType: "application/json",
-            description: `Generated image by ${prediction.model} with id ${prediction.id}`,
-          })),
-        nextCursor: undefined,
-      };
-    } catch (error) {
-      console.error("Error listing predictions:", error);
-      return {
-        resources: [],
-        nextCursor: undefined,
-      };
-    }
+    const predictions = await fetchAllPredictions("svglist");
+    return {
+      resources: predictions
+        .filter((prediction) => prediction.model === CONFIG.svgModelId)
+        .map((prediction) => ({
+          uri: `svglist://${prediction.id}`,
+          name: `SVG ${prediction.id}`,
+          mimeType: "application/json",
+          description: `Generated image by ${prediction.model} with id ${prediction.id}`,
+        })),
+      nextCursor: undefined,
+    };
   };
 
-  server.resource(
+  server.registerResource(
     "svglist",
     new ResourceTemplate("svglist://{id}", {
       list,
     }),
+    {
+      title: "Generated SVGs",
+      description:
+        "History of SVGs generated with the Recraft V3 SVG model on Replicate",
+      mimeType: "image/svg+xml",
+    },
     async (uri, { id }) => {
       const prediction = await replicate.predictions.get(id as string);
 
