@@ -2,6 +2,8 @@
 
 # Replicate Flux MCP
 
+[English](README.md) | [中文](README.zh.md)
+
 ![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![TypeScript](https://img.shields.io/badge/TypeScript-4.9+-blue)
@@ -16,7 +18,7 @@
   <img width="380" height="200" src="https://glama.ai/mcp/servers/ss8n1knen8/badge" />
 </a>
 
-**Replicate Flux MCP** is an advanced Model Context Protocol (MCP) server that empowers AI assistants to generate high-quality images and vector graphics. Leveraging [Black Forest Labs' Flux Schnell model](https://replicate.com/black-forest-labs/flux-schnell) for raster images and [Recraft's V3 SVG model](https://replicate.com/recraft-ai/recraft-v3-svg) for vector graphics via the Replicate API.
+**Replicate Flux MCP** is an advanced Model Context Protocol (MCP) server that empowers AI assistants to generate high-quality images and vector graphics. By default it uses [black-forest-labs/flux-schnell](https://replicate.com/black-forest-labs/flux-schnell) for raster images and [recraft-ai/recraft-v3-svg](https://replicate.com/recraft-ai/recraft-v3-svg) for SVG output. You can override the curated image/SVG models through environment variables, and image tools also accept a per-call `model_id` override from the built-in allowlist.
 
 ## 📑 Table of Contents
 
@@ -25,7 +27,8 @@
   - [Cursor Integration](#cursor-integration)
   - [Claude Desktop Integration](#claude-desktop-integration)
   - [Smithery Integration](#smithery-integration)
-  - [Glama.ai Integration](#glamaai-integration)
+- [Glama.ai Integration](#glamaai-integration)
+- [Codex Integration](#codex-integration)
 - [Features](#-features)
 - [Documentation](#-documentation)
   - [Available Tools](#available-tools)
@@ -139,9 +142,29 @@ This MCP server is also available as a hosted service on Glama.ai, providing ano
 
 For more information, visit the [Glama.ai MCP servers documentation](https://glama.ai/mcp/servers).
 
+### Codex Integration
+
+Add the server to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.replicate]
+command = "npx"
+args = ["-y", "replicate-flux-mcp"]
+env = { REPLICATE_API_TOKEN = "your-replicate-api-token", REPLICATE_IMAGE_MODEL_ID = "your-image-model-id", REPLICATE_SVG_MODEL_ID = "your-svg-model-id" }
+startup_timeout_sec = 30_000
+```
+
+Replace the env values as needed. If you omit `REPLICATE_IMAGE_MODEL_ID` / `REPLICATE_SVG_MODEL_ID`, the server uses `black-forest-labs/flux-schnell` for images and `recraft-ai/recraft-v3-svg` for SVGs.
+
+Curated tools validate model overrides against built-in allowlists:
+
+- **Image generation**: `black-forest-labs/flux-schnell`, `google/imagen-4`, `black-forest-labs/flux-kontext-pro`, `ideogram-ai/ideogram-v3-turbo`, `black-forest-labs/flux-1.1-pro`, `black-forest-labs/flux-dev`
+- **SVG generation**: `recraft-ai/recraft-v3-svg`
+- **Legacy `run_model` extras**: `minimax/video-01`, `luma/reframe-video`, `topazlabs/video-upscale`, `topazlabs/image-upscale`, `szcho/codeformer`, `tencentarc/gfpgan`
+
 ## 🌟 Features
 
-- **🖼️ High-Quality Image Generation** — Flux Schnell raster images with full control over aspect ratio, megapixels, inference steps, output format, and seed.
+- **🖼️ High-Quality Image Generation** — Flux Schnell raster images by default, with environment-variable and per-tool image model overrides.
 - **🎨 Vector Graphics** — Recraft V3 SVG for logos, icons, and diagrams.
 - **📊 Batch + Variants** — Generate N images from N prompts or N variants of one prompt (seed-based or prompt-modifier-based).
 - **🧩 Arbitrary Replicate Models** — `run_replicate_model` escape hatch accepts any `owner/name[:version]` reference, with `get_model_schema` introspection for the OpenAPI input schema. Optional allowlist via `REPLICATE_MODEL_ALLOWLIST`.
@@ -159,11 +182,12 @@ For more information, visit the [Glama.ai MCP servers documentation](https://gla
 
 #### `generate_image`
 
-Generates an image based on a text prompt using the Flux Schnell model.
+Generates an image based on a text prompt using the configured image model (allowlist only).
 
 ```typescript
 {
   prompt: string;                // Required: Text description of the image to generate
+  model_id?: string;             // Optional: Override image model (allowlist only)
   seed?: number;                 // Optional: Random seed for reproducible generation
   go_fast?: boolean;             // Optional: Run faster predictions with optimized model (default: true)
   megapixels?: "1" | "0.25";     // Optional: Image resolution (default: "1")
@@ -173,16 +197,18 @@ Generates an image based on a text prompt using the Flux Schnell model.
   output_quality?: number;       // Optional: Image quality (0-100) (default: 80)
   num_inference_steps?: number;  // Optional: Number of denoising steps (1-4) (default: 4)
   disable_safety_checker?: boolean; // Optional: Disable safety filter (default: false)
+  support_image_mcp_response_type?: boolean; // Optional: Return embedded image content when supported (default: true)
 }
 ```
 
 #### `generate_multiple_images`
 
-Generates multiple images based on an array of prompts using the Flux Schnell model.
+Generates multiple images based on an array of prompts using the configured image model (allowlist only).
 
 ```typescript
 {
   prompts: string[];             // Required: Array of text descriptions for images to generate (1-10 prompts)
+  model_id?: string;             // Optional: Override image model (allowlist only)
   seed?: number;                 // Optional: Random seed for reproducible generation
   go_fast?: boolean;             // Optional: Run faster predictions with optimized model (default: true)
   megapixels?: "1" | "0.25";     // Optional: Image resolution (default: "1")
@@ -191,16 +217,18 @@ Generates multiple images based on an array of prompts using the Flux Schnell mo
   output_quality?: number;       // Optional: Image quality (0-100) (default: 80)
   num_inference_steps?: number;  // Optional: Number of denoising steps (1-4) (default: 4)
   disable_safety_checker?: boolean; // Optional: Disable safety filter (default: false)
+  support_image_mcp_response_type?: boolean; // Optional: Return embedded image content when supported (default: true)
 }
 ```
 
 #### `generate_image_variants`
 
-Generates multiple variants of the same image from a single prompt.
+Generates multiple variants of the same image from a single prompt using the configured image model (allowlist only).
 
 ```typescript
 {
   prompt: string;                // Required: Text description for the image to generate variants of
+  model_id?: string;             // Optional: Override image model (allowlist only)
   num_variants: number;          // Required: Number of image variants to generate (2-10, default: 4)
   prompt_variations?: string[];  // Optional: List of prompt modifiers to apply to variants (e.g., ["in watercolor style", "in oil painting style"])
   variation_mode?: "append" | "replace"; // Optional: How to apply variations - 'append' adds to base prompt, 'replace' uses variations directly (default: "append")
@@ -212,12 +240,13 @@ Generates multiple variants of the same image from a single prompt.
   output_quality?: number;       // Optional: Image quality (0-100) (default: 80)
   num_inference_steps?: number;  // Optional: Number of denoising steps (1-4) (default: 4)
   disable_safety_checker?: boolean; // Optional: Disable safety filter (default: false)
+  support_image_mcp_response_type?: boolean; // Optional: Return embedded image content when supported (default: true)
 }
 ```
 
 #### `generate_svg`
 
-Generates an SVG vector image based on a text prompt using the Recraft V3 SVG model.
+Generates SVG/vector output based on a text prompt using the configured SVG model (allowlist only).
 
 ```typescript
 {
@@ -245,6 +274,17 @@ Gets detailed information about a specific prediction.
 ```typescript
 {
   predictionId: string;  // Required: ID of the prediction to retrieve
+}
+```
+
+#### `run_model`
+
+Runs a whitelisted Replicate model with a raw input payload (useful for video or restoration models).
+
+```typescript
+{
+  model_id: string;                // Required: Replicate model id (allowlist only)
+  input?: Record<string, unknown>; // Optional: Raw input payload for the model
 }
 ```
 
@@ -277,11 +317,11 @@ Fetches the OpenAPI input schema and description for a Replicate model so you ca
 
 #### `imagelist`
 
-Browse your history of generated images created with the Flux Schnell model.
+Browse your history of generated images created with the configured image model.
 
 #### `svglist`
 
-Browse your history of generated SVG images created with the Recraft V3 SVG model.
+Browse your history of generated SVG outputs created with the configured SVG model.
 
 #### `predictionlist`
 
@@ -317,6 +357,8 @@ Clients that understand MCP structured output can consume URLs and metadata dire
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `REPLICATE_API_TOKEN` | yes | API token for [Replicate](https://replicate.com/account/api-tokens). The server exits immediately if it's missing. |
+| `REPLICATE_IMAGE_MODEL_ID` | no | Overrides the default curated image model used by `generate_image`, `generate_multiple_images`, `generate_image_variants`, and `create_prediction`. The value must be in the built-in image allowlist. |
+| `REPLICATE_SVG_MODEL_ID` | no | Overrides the default SVG model used by `generate_svg`. The value must be in the built-in SVG allowlist. |
 | `REPLICATE_MODEL_ALLOWLIST` | no | Comma-separated `owner/name` entries that gate `run_replicate_model`. **Unset** = any model allowed. **Set-but-empty** = deny all (fail-closed). Evaluated once at process start, so set it in your MCP client's `env` block (not via a dotenv loaded later). |
 
 ## 💻 Development
@@ -390,21 +432,37 @@ Contributions adding a proper test framework (e.g. Vitest + an MCP stdio client 
 
 ### Configuration
 
-The server can be configured by modifying the `CONFIG` object in `src/config/index.ts`:
+The server can be configured by modifying the `CONFIG` object in `src/config/index.ts` or by setting the `REPLICATE_IMAGE_MODEL_ID` / `REPLICATE_SVG_MODEL_ID` environment variables to override the defaults:
 
 ```typescript
 export const CONFIG = {
   serverName: "replicate-flux-mcp",
   serverVersion: "0.4.0",
-  imageModelId: "black-forest-labs/flux-schnell",
-  svgModelId: "recraft-ai/recraft-v3-svg",
+  imageModelId: process.env.REPLICATE_IMAGE_MODEL_ID ?? "black-forest-labs/flux-schnell",
+  svgModelId: process.env.REPLICATE_SVG_MODEL_ID ?? "recraft-ai/recraft-v3-svg",
   pollingAttempts: 25,
   pollingInterval: 2000, // ms
+  modelAllowlistConfigured: process.env.REPLICATE_MODEL_ALLOWLIST !== undefined,
   modelAllowlist: (process.env.REPLICATE_MODEL_ALLOWLIST ?? "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean),
 };
+```
+
+#### Switching models (no code changes)
+
+Use env vars when launching the server (works with `npx`, Cursor, Claude Desktop, etc.). Curated image/SVG tool overrides must be in the built-in allowlists:
+
+```bash
+# Stay on defaults:
+REPLICATE_API_TOKEN=YOUR_TOKEN npx -y replicate-flux-mcp
+
+# Switch to other allowlisted models
+REPLICATE_IMAGE_MODEL_ID="google/imagen-4" \
+REPLICATE_SVG_MODEL_ID="recraft-ai/recraft-v3-svg" \
+REPLICATE_API_TOKEN=YOUR_TOKEN \
+npx -y replicate-flux-mcp
 ```
 
 `modelAllowlist` is evaluated once at process start from `REPLICATE_MODEL_ALLOWLIST`. Restart the server after changing it.
@@ -445,6 +503,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - [Model Context Protocol Documentation](https://modelcontextprotocol.io)
 - [Replicate API Documentation](https://replicate.com/docs)
+- [Try for Free Collection](https://replicate.com/collections/try-for-free)
 - [Flux Schnell Model](https://replicate.com/black-forest-labs/flux-schnell)
 - [Recraft V3 SVG Model](https://replicate.com/recraft-ai/recraft-v3-svg)
 - [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
@@ -504,4 +563,3 @@ Or explore style variations with prompt modifiers:
 ---
 
 Made with ❤️ by Yaroslav Boiko
-

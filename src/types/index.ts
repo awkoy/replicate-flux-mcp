@@ -1,5 +1,22 @@
 import { z } from "zod";
 
+const imageModelIdParam = {
+  model_id: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("Optional Replicate model id (allowlist only)"),
+};
+
+const supportImageResponseParam = {
+  support_image_mcp_response_type: z
+    .boolean()
+    .default(true)
+    .describe(
+      "Disable if the image type is not supported in the client response"
+    ),
+};
+
 const sharedImageParams = {
   seed: z
     .number()
@@ -62,6 +79,7 @@ const sharedImageParams = {
 
 export const createPredictionSchema = {
   prompt: z.string().min(1).describe("Prompt for generated image"),
+  ...imageModelIdParam,
   num_outputs: z
     .number()
     .int()
@@ -76,7 +94,10 @@ export type CreatePredictionParams = z.infer<
   typeof createPredictionObjectSchema
 >;
 
-export const imageGenerationSchema = createPredictionSchema;
+export const imageGenerationSchema = {
+  ...createPredictionSchema,
+  ...supportImageResponseParam,
+};
 const imageGenerationObjectSchema = z.object(imageGenerationSchema);
 export type ImageGenerationParams = z.infer<typeof imageGenerationObjectSchema>;
 
@@ -150,7 +171,9 @@ export const multiImageGenerationSchema = {
     .min(1)
     .max(10)
     .describe("Array of text descriptions for the images to generate"),
+  ...imageModelIdParam,
   ...sharedImageParams,
+  ...supportImageResponseParam,
 };
 const multiImageGenerationObjectSchema = z.object(multiImageGenerationSchema);
 export type MultiImageGenerationParams = z.infer<
@@ -215,6 +238,7 @@ export const imageVariantsGenerationSchema = {
     .string()
     .min(1)
     .describe("Text description for the image to generate variants of"),
+  ...imageModelIdParam,
   num_variants: z
     .number()
     .int()
@@ -242,6 +266,7 @@ export const imageVariantsGenerationSchema = {
     .describe(
       "Base random seed. Each variant will use seed+variant_index for reproducibility"
     ),
+  ...supportImageResponseParam,
 };
 const imageVariantsGenerationObjectSchema = z.object(
   imageVariantsGenerationSchema
@@ -270,3 +295,16 @@ export const imageVariantsGenerationOutputSchema = {
   format: z.enum(["webp", "jpg", "png"]).describe("Output image format"),
   aspect_ratio: z.string().describe("Aspect ratio of the generated images"),
 };
+
+export const runModelSchema = {
+  model_id: z
+    .string()
+    .min(1)
+    .describe("Replicate model id to run (allowlist only)"),
+  input: z
+    .record(z.unknown())
+    .optional()
+    .describe("Input payload for the selected model"),
+};
+const runModelObjectSchema = z.object(runModelSchema);
+export type RunModelParams = z.infer<typeof runModelObjectSchema>;

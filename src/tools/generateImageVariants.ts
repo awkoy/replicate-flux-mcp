@@ -9,14 +9,14 @@ import {
 import { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import { FileOutput } from "replicate";
 import { mimeFor, outputToBase64 } from "../utils/image.js";
-import { CONFIG } from "../config/index.js";
+import { resolveImageModelId } from "../utils/model.js";
 
 type Variant = {
   variant_index: number;
   url: string;
   prompt_used: string;
   seed?: number;
-  imageBase64: string;
+  imageBase64?: string;
 };
 
 export const registerGenerateImageVariantsTool = async (
@@ -29,15 +29,19 @@ export const registerGenerateImageVariantsTool = async (
     seed,
     prompt_variations,
     variation_mode,
+    model_id,
+    support_image_mcp_response_type,
     ...commonParams
   } = input;
 
   try {
+    const modelId = resolveImageModelId(model_id);
     const usingPromptVariations =
       !!prompt_variations && prompt_variations.length > 0;
     const effectiveVariants = usingPromptVariations
       ? Math.min(num_variants, prompt_variations!.length)
       : num_variants;
+    const supportsImageContent = support_image_mcp_response_type !== false;
 
     const progressToken = extra._meta?.progressToken;
     let done = 0;
@@ -68,7 +72,7 @@ export const registerGenerateImageVariantsTool = async (
             variation_mode === "append" ? `${prompt} ${variation}` : variation;
         }
 
-        const [output] = (await replicate.run(CONFIG.imageModelId, {
+        const [output] = (await replicate.run(modelId, {
           input: {
             prompt: variantPrompt,
             seed: variantSeed,
@@ -77,7 +81,9 @@ export const registerGenerateImageVariantsTool = async (
         })) as [FileOutput];
 
         const imageUrl = output.url() as unknown as string;
-        const imageBase64 = await outputToBase64(output);
+        const imageBase64 = supportsImageContent
+          ? await outputToBase64(output)
+          : undefined;
 
         done += 1;
         await notify(`Completed ${done}/${effectiveVariants}`);
@@ -111,7 +117,9 @@ export const registerGenerateImageVariantsTool = async (
       else if (v.seed !== undefined) description += ` (seed: ${v.seed})`;
       description += `\nImage URL: ${v.url}`;
       content.push({ type: "text", text: `\n\n${description}` });
-      content.push({ type: "image", data: v.imageBase64, mimeType });
+      if (supportsImageContent && v.imageBase64) {
+        content.push({ type: "image", data: v.imageBase64, mimeType });
+      }
     }
 
     const structuredVariants = variants.map((v) => ({

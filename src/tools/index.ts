@@ -9,6 +9,7 @@ import {
   multiImageGenerationOutputSchema,
   multiImageGenerationSchema,
   predictionListSchema,
+  runModelSchema,
   runReplicateModelSchema,
   svgGenerationOutputSchema,
   svgGenerationSchema,
@@ -22,6 +23,7 @@ import { registerPredictionListTool } from "./predictionList.js";
 import { registerGenerateSvgTool } from "./generateSVG.js";
 import { registerGenerateMultipleImagesTool } from "./generateMultipleImages.js";
 import { registerGenerateImageVariantsTool } from "./generateImageVariants.js";
+import { registerRunModelTool } from "./runModel.js";
 import { registerRunReplicateModelTool } from "./runReplicateModel.js";
 import { registerGetModelSchemaTool } from "./getModelSchema.js";
 
@@ -120,6 +122,16 @@ export const registerAllTools = () => {
       },
     },
     registerPredictionListTool
+  );
+  server.registerTool(
+    "run_model",
+    {
+      title: "Run whitelisted Replicate model",
+      description: "Run a whitelisted Replicate model with a raw input payload",
+      inputSchema: runModelSchema,
+      annotations: externalWriteAnnotations,
+    },
+    registerRunModelTool
   );
   server.registerTool(
     "run_replicate_model",
