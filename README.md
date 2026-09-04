@@ -10,7 +10,7 @@
 ![Model Context Protocol](https://img.shields.io/badge/MCP-Enabled-purple)
 
 [![Trust Score](https://archestra.ai/mcp-catalog/api/badge/quality/awkoy/replicate-flux-mcp)](https://archestra.ai/mcp-catalog/awkoy__replicate-flux-mcp)
-[![smithery badge](https://smithery.ai/badge/@awkoy/replicate-flux-mcp)](https://smithery.ai/server/@awkoy/replicate-flux-mcp)
+[![LightNow](https://lightnow.ai/badge/io.github.awkoy/replicate-flux-mcp)](https://lightnow.ai/servers/io.github.awkoy/replicate-flux-mcp)
 ![NPM Downloads](https://img.shields.io/npm/dw/replicate-flux-mcp)
 ![Stars](https://img.shields.io/github/stars/awkoy/replicate-flux-mcp)
 
