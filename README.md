@@ -509,6 +509,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
 - [Smithery Documentation](https://smithery.ai/docs)
 - [Glama.ai MCP Servers](https://glama.ai/mcp/servers)
+- [Author: Yaroslav Boiko](https://yaroslavboiko.com)
 
 ## 🎨 Examples
 

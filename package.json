@@ -22,7 +22,11 @@
     "image-generation",
     "ai"
   ],
-  "author": "Yaroslav Boiko <y.boikodeveloper@gmail.com>",
+  "author": {
+    "name": "Yaroslav Boiko",
+    "email": "y.boikodeveloper@gmail.com",
+    "url": "https://yaroslavboiko.com"
+  },
   "license": "MIT",
   "description": "MCP for Replicate Flux Model",
   "files": [
