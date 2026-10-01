@@ -5,7 +5,7 @@ const svgModelId = (process.env.REPLICATE_SVG_MODEL_ID ??
 
 export const CONFIG = {
   serverName: "replicate-flux-mcp",
-  serverVersion: "0.4.0",
+  serverVersion: "0.4.1",
   imageModelId,
   svgModelId,
   pollingAttempts: 25,

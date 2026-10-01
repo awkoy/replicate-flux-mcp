@@ -437,7 +437,7 @@ The server can be configured by modifying the `CONFIG` object in `src/config/ind
 ```typescript
 export const CONFIG = {
   serverName: "replicate-flux-mcp",
-  serverVersion: "0.4.0",
+  serverVersion: "0.4.1",
   imageModelId: process.env.REPLICATE_IMAGE_MODEL_ID ?? "black-forest-labs/flux-schnell",
   svgModelId: process.env.REPLICATE_SVG_MODEL_ID ?? "recraft-ai/recraft-v3-svg",
   pollingAttempts: 25,
